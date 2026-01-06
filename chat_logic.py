@@ -297,7 +297,7 @@ def chat_logic(msg,user_id="default"):
 
     if any(phrase in msg for phrase in ["create order", "start create", "can you create"]):
         user_state[user_id] = {"step": "ask_count"}
-        return jsonify({"reply": "✅ How many orders do you want to create?"})
+        return "✅ How many orders do you want to create?"
 
     if user_state.get(user_id, {}).get("step") == "ask_count":
         if msg.isdigit():
@@ -305,11 +305,10 @@ def chat_logic(msg,user_id="default"):
             user_state[user_id]["step"] = "ask_status"
             status_text = "\n".join([f"{i+1}. {s}" for i, s in enumerate(ORDER_STATUS_LIST)])
 
-            return jsonify({
-                "reply": f"📦 Great! Choose the order status:\n\n{status_text}"
-            })
+            return  f"📦 Great! Choose the order status:\n\n{status_text}"
+        
         else:
-            return jsonify({"reply": "⚠️ Please enter a valid number."})
+            return "⚠️ Please enter a valid number."
 
     if user_state.get(user_id, {}).get("step") == "ask_status":
         selected_status = None
@@ -322,9 +321,8 @@ def chat_logic(msg,user_id="default"):
         if not selected_status:
             # Format into Slack-friendly list
             status_text = "\n".join([f"{i+1}. {s}" for i, s in enumerate(ORDER_STATUS_LIST)])
-            return jsonify({
-                "reply": f"⚠️ Please select a valid status from the list:\n\n{status_text}"
-            })
+            return f"⚠️ Please select a valid status from the list:\n\n{status_text}"
+      
 
         # proceed with order creation
         count = user_state[user_id]["count"]
@@ -335,14 +333,13 @@ def chat_logic(msg,user_id="default"):
             session_id = i + 1
             logs.extend(process_single_order(ORDER_JSON_TEMPLATE, target_idx, str(session_id)))
 
-        return jsonify({"reply": logs})
-
+        return logs
 
     if msg in ["hi", "hello", "hey", "start"]:
-        return jsonify({"reply": "👋 Hi! I can create and move orders. Type 'create order' to begin."})
+        return "👋 Hi! I can create and move orders. Type 'create order' to begin."
 
     if msg == "help":
-        return jsonify({"reply": "💡 Commands: create order, help, status"})
+        return "💡 Commands: create order, help, status"
 
-    return jsonify({"reply": "🤖 Sorry, I didn’t understand that. Try 'create order' or 'help'."})
+    return "🤖 Sorry, I didn’t understand that. Try 'create order' or 'help'."
 
