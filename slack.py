@@ -1,7 +1,8 @@
 import os
 import requests
 
-from oms_chatbot_flask import chat
+from chat_logic import chat_logic
+
 
 SLACK_BOT_TOKEN = os.getenv("SLACK_BOT_TOKEN")
 SLACK_API_URL = "https://slack.com/api/chat.postMessage"
@@ -37,7 +38,7 @@ def handle_event(data):
         # remove bot mention if present
         clean_text = text.split(">")[-1].strip()
 
-        reply = chat(clean_text)
+        reply = chat_logic(clean_text, user_id=user)
         send_message(channel, reply)
 
     return "ok"
