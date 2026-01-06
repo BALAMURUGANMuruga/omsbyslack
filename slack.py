@@ -1,65 +1,45 @@
-from slack_bolt import App
-from slack_bolt.adapter.socket_mode import SocketModeHandler
-from dotenv import load_dotenv
 import os
-import re
 import requests
-import json
-
-load_dotenv()
 
 SLACK_BOT_TOKEN = os.getenv("SLACK_BOT_TOKEN")
-SLACK_APP_TOKEN = os.getenv("SLACK_SIGNING_SECRET")
-# Slack app
-app = App(token=SLACK_BOT_TOKEN)
-
-FLASK_CHAT_URL = "http://localhost:5000/chat"   # your Flask chatbot API
+SLACK_API_URL = "https://slack.com/api/chat.postMessage"
 
 
-# -------------------------
-# When someone mentions bot
-# -------------------------
-@app.event("app_mention")
-def mention_handler(event, say):
-    user = event.get("user")
-    say(f"Hi <@{user}> 👋 I’m ready! Type *create order* to start.")
+def send_message(channel, text):
+    headers = {
+        "Authorization": f"Bearer {SLACK_BOT_TOKEN}",
+        "Content-Type": "application/json"
+    }
+    payload = {
+        "channel": channel,
+        "text": text
+    }
+    requests.post(SLACK_API_URL, headers=headers, json=payload)
 
 
-# -------------------------
-# Message Handler → sends text to Flask chatbot
-# -------------------------
-@app.message(re.compile(".*"))
-def handle_message(message, say):
-    user = message["user"]
-    text = message.get("text", "")
+def handle_event(data):
+    """
+    Called from Flask route: /slack/events
+    """
 
-    # Send to your Flask chatbot
-    payload = {"message": text}
-    try:
-        resp = requests.post(FLASK_CHAT_URL, json=payload)
-        result = resp.json()
+    # 1️⃣ Slack URL verification
+    if data.get("type") == "url_verification":
+        return data.get("challenge")
 
-        # Format reply
-        reply = result.get("reply")
+    # 2️⃣ Handle message events
+    event = data.get("event", {})
+    event_type = event.get("type")
 
-        # If reply is list (logs)
-        if isinstance(reply, list):
-            msg = "\n".join([str(x) for x in reply])
-        else:
-            msg = reply
+    if event_type == "app_mention":
+        channel = event.get("channel")
+        send_message(channel, "👋 Hi! Type *create order* to begin.")
+        return "ok"
 
-        say(f"<@{user}> 👉\n{msg}")
+    if event_type == "message" and not event.get("bot_id"):
+        channel = event.get("channel")
+        text = event.get("text", "").lower()
 
-    except Exception as e:
-        say(f"⚠️ Error contacting OMS server: {e}")
+        if "create order" in text:
+            send_message(channel, "✅ Order creation started")
 
-# -------------------------
-# ✅ REQUIRED FOR main.py
-# -------------------------
-def main():
-    handler = SocketModeHandler(app, SLACK_APP_TOKEN)
-    handler.start()
-
-# Run Socket Mode
-if __name__ == "__main__":
-    main()
+    return "ok"

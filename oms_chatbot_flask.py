@@ -6,6 +6,8 @@ import copy
 from datetime import datetime
 import random
 from flask_cors import CORS
+import slack
+
 
 app = Flask(__name__)
 CORS(app)
@@ -353,6 +355,10 @@ def get_status_options():
     return jsonify({"options": ORDER_STATUS_LIST[1:]})
 
 
-def main():
-    port = int(os.environ.get("PORT", 10000))
-    app.run(host="0.0.0.0", port=port)
+@app.route("/slack/events", methods=["POST"])
+def slack_events():
+    return slack.handle_event(request.json)
+
+# def main():
+#     port = int(os.environ.get("PORT", 10000))
+#     app.run(host="0.0.0.0", port=port)
