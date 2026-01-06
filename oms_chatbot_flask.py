@@ -1,5 +1,5 @@
 import os
-from flask import Flask, request, jsonify
+from flask import Flask, request,Response, jsonify
 import requests
 import xmltodict
 import copy
@@ -357,6 +357,13 @@ def get_status_options():
 
 @app.route("/slack/events", methods=["POST"])
 def slack_events():
+    data = request.get_json(force=True)
+
+    # 🔑 Slack URL verification
+    if data.get("type") == "url_verification":
+        challenge = data.get("challenge")
+        return Response(challenge, status=200, mimetype="text/plain")
+
     return slack.handle_event(request.json)
 
 @app.route("/health", methods=["GET"])
