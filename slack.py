@@ -39,6 +39,8 @@ def handle_event(data):
         clean_text = text.split(">")[-1].strip()
 
         reply = chat_logic(clean_text, user_id=user)
+        if not isinstance(reply, str):
+          reply = str(reply)
         send_message(channel, reply)
 
     return "ok"
