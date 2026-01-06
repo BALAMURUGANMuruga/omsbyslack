@@ -1,0 +1,6 @@
+flask
+flask-cors
+requests
+xmltodict
+python-dotenv
+slack-bolt
