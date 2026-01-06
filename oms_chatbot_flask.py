@@ -359,6 +359,14 @@ def get_status_options():
 def slack_events():
     return slack.handle_event(request.json)
 
+@app.route("/health", methods=["GET"])
+def health():
+    return "OK", 200
+
+@app.route("/", methods=["GET"])
+def home():
+    return "OMS by Slack is running 🚀", 200
+
 # def main():
 #     port = int(os.environ.get("PORT", 10000))
 #     app.run(host="0.0.0.0", port=port)
