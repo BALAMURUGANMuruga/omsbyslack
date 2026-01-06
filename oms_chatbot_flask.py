@@ -289,10 +289,10 @@ def process_single_order(order_template, target_status_idx, session):
 # =========================
 user_state = {}
 
-@app.route('/chat', methods=['POST'])
-def chat():
+def chat(msg):
     data = request.json or {}
-    msg = (data.get("message") or "").strip().lower()
+    # msg = (data.get("message") or "").strip().lower()
+    msg = msg.strip().lower()
     user_id = "default"
 
     if any(phrase in msg for phrase in ["create order", "start create", "can you create"]):

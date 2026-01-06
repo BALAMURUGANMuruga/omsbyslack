@@ -1,6 +1,8 @@
 import os
 import requests
 
+from oms_chatbot_flask import chat
+
 SLACK_BOT_TOKEN = os.getenv("SLACK_BOT_TOKEN")
 SLACK_API_URL = "https://slack.com/api/chat.postMessage"
 
@@ -18,28 +20,24 @@ def send_message(channel, text):
 
 
 def handle_event(data):
-    """
-    Called from Flask route: /slack/events
-    """
-
-    # 1️⃣ Slack URL verification
+     # URL verification
     if data.get("type") == "url_verification":
         return data.get("challenge")
 
-    # 2️⃣ Handle message events
     event = data.get("event", {})
     event_type = event.get("type")
 
-    if event_type == "app_mention":
+    if event_type == "app_mention" or (
+        event_type == "message" and not event.get("bot_id")
+    ):
         channel = event.get("channel")
-        send_message(channel, "👋 Hi! Type *create order* to begin.")
-        return "ok"
+        user = event.get("user")
+        text = event.get("text", "")
 
-    if event_type == "message" and not event.get("bot_id"):
-        channel = event.get("channel")
-        text = event.get("text", "").lower()
+        # remove bot mention if present
+        clean_text = text.split(">")[-1].strip()
 
-        if "create order" in text:
-            send_message(channel, "✅ Order creation started")
+        reply = chat(clean_text)
+        send_message(channel, reply)
 
     return "ok"
