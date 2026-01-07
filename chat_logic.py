@@ -159,15 +159,11 @@ def process_single_order(order_template, target_status_idx, session):
     resp = post_interop("createOrder", xml_data, OUTPUT_TEMPLATE)
     resp_dict = xmltodict.parse(resp.text)
     order_header_key = resp_dict.get("Order", {}).get("@OrderHeaderKey", "")
-
-     # Only after creation, append the order link
-    order_link_obj = {
-        "message": f"Open Order {order_no} in call center",
-        "orderLink": f"https://localhost:6443/call-center/order-details?orderNo={order_no}&orderHeaderKey={order_header_key}&enterprise=Matrix-R&title={order_no}&prev=7072&session={session}&featureId=cc-order-details&uniqueId=9593&bcRoot=7072"
-    }
-    logs.append(order_link_obj)
-
-    logs.append(f"✅ Created Order: {order_no}")
+    if "Errors" in resp_dict:
+        logs.append(f"❌ Error creating Order")
+        return logs
+    else:
+     logs.append(f"✅ Created Order: {order_no}")
 
     # Step 2: Release Holds immediately after creation
     order_hold_type = resp_dict.get("Order", {}).get("OrderHoldTypes", {}).get("OrderHoldType", None)
@@ -280,7 +276,7 @@ def process_single_order(order_template, target_status_idx, session):
             logs.append(f"❌ Error moving to {status}")
         else:
            
-            logs.append(f"✅ Order {order_no} moved to {status} successfully")
+            logs.append(f"• {status}")
         
     return logs
 
