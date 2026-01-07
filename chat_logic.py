@@ -289,31 +289,37 @@ def process_single_order(order_template, target_status_idx, session):
 # =========================
 user_state = {}
 
-def chat_logic(msg,user_id="default"):
-    data = request.json or {}
-    # msg = (data.get("message") or "").strip().lower()
+def chat_logic(msg, user_id):
     msg = msg.strip().lower()
-    user_id = "default"
     print("msg:", msg)
 
+    # init state safely
+    if user_id not in user_state:
+        user_state[user_id] = {"step": None}
+
+    # START
     if any(phrase in msg for phrase in ["create order", "start create", "can you create"]):
         user_state[user_id] = {"step": "ask_count"}
         return "✅ How many orders do you want to create?"
 
-    if user_state.get(user_id, {}).get("step") == "ask_count":
-        print("DEBUG1:", user_id, user_state.get(user_id))
+    # STEP 1
+    if user_state[user_id]["step"] == "ask_count":
+        print("DEBUG1:", user_id, user_state[user_id])
+
         if msg.isdigit():
             user_state[user_id]["count"] = int(msg)
             user_state[user_id]["step"] = "ask_status"
-            status_text = "\n".join([f"{i+1}. {s}" for i, s in enumerate(ORDER_STATUS_LIST)])
 
-            return  f"📦 Great! Choose the order status:\n\n{status_text}"
-        
-        else:
-            return "⚠️ Please enter a valid number."
+            status_text = "\n".join(
+                [f"{i+1}. {s}" for i, s in enumerate(ORDER_STATUS_LIST)]
+            )
+            return f"📦 Great! Choose the order status:\n\n{status_text}"
 
-    if user_state.get(user_id, {}).get("step") == "ask_status":
-        print("DEBUG2:", user_id, user_state.get(user_id))
+        return "⚠️ Please enter a valid number."
+
+    # STEP 2
+    if user_state[user_id]["step"] == "ask_status":
+        print("DEBUG2:", user_id, user_state[user_id])
 
         selected_status = None
         target_idx = None
@@ -330,11 +336,8 @@ def chat_logic(msg,user_id="default"):
             )
             return f"⚠️ Please select a valid status:\n\n{status_text}"
 
-        # ✅ proceed with order creation
         count = user_state[user_id]["count"]
-
-        # ✅ reset ONLY step (do not overwrite dict)
-        user_state[user_id]["step"] = None
+        user_state[user_id]["step"] = None  # reset step only
 
         logs = []
         for i in range(count):
@@ -351,7 +354,6 @@ def chat_logic(msg,user_id="default"):
                 logs.append(str(result))
 
         return "\n".join(logs)
-
 
 
     if msg in ["hi", "hello", "hey", "start"]:
