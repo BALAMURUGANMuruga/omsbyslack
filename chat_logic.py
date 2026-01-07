@@ -15,7 +15,7 @@ CORS(app)
 # =========================
 # 1. Configuration
 # =========================
-URL = "http://localhost:9080/smcfs/interop/InteropHttpServlet"
+URL = "http://nonemanating-acarpous-finnegan.ngrok-free.dev/smcfs/interop/InteropHttpServlet"
 USER = "admin"
 PASSWORD = "password"
 USER_NAME = "balamurugan"
