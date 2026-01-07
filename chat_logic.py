@@ -312,28 +312,43 @@ def chat_logic(msg,user_id="default"):
 
     if user_state.get(user_id, {}).get("step") == "ask_status":
         selected_status = None
+        target_idx = None
+
         for i, status in enumerate(ORDER_STATUS_LIST, start=1):
-            if msg == str(i) or msg in status.lower():
+            if msg == str(i) or msg == status.lower():
                 selected_status = status
                 target_idx = i
                 break
 
         if not selected_status:
-            # Format into Slack-friendly list
-            status_text = "\n".join([f"{i+1}. {s}" for i, s in enumerate(ORDER_STATUS_LIST)])
+            status_text = "\n".join(
+                [f"{i+1}. {s}" for i, s in enumerate(ORDER_STATUS_LIST)]
+            )
             return f"⚠️ Please select a valid status from the list:\n\n{status_text}"
-      
 
-        # proceed with order creation
+        # ✅ proceed with order creation
         count = user_state[user_id]["count"]
-        user_state[user_id]["step"] = None
+        user_state[user_id] = {"step": None}  # reset state safely
+
         logs = []
 
         for i in range(count):
             session_id = i + 1
-            logs.extend(process_single_order(ORDER_JSON_TEMPLATE, target_idx, str(session_id)))
 
-        return logs
+            result = process_single_order(
+                ORDER_JSON_TEMPLATE,
+                target_idx,
+                str(session_id)
+            )
+
+            # 🔐 normalize output
+            if isinstance(result, list):
+                logs.extend([str(x) for x in result])
+            else:
+                logs.append(str(result))
+
+        return "\n".join(logs)   # ✅ STRING ONLY
+
 
     if msg in ["hi", "hello", "hey", "start"]:
         return "👋 Hi! I can create and move orders. Type 'create order' to begin."
