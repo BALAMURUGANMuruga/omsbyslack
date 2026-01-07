@@ -294,12 +294,14 @@ def chat_logic(msg,user_id="default"):
     # msg = (data.get("message") or "").strip().lower()
     msg = msg.strip().lower()
     user_id = "default"
+    print("msg:", msg)
 
     if any(phrase in msg for phrase in ["create order", "start create", "can you create"]):
         user_state[user_id] = {"step": "ask_count"}
         return "✅ How many orders do you want to create?"
 
     if user_state.get(user_id, {}).get("step") == "ask_count":
+        print("DEBUG1:", user_id, user_state.get(user_id))
         if msg.isdigit():
             user_state[user_id]["count"] = int(msg)
             user_state[user_id]["step"] = "ask_status"
@@ -311,6 +313,8 @@ def chat_logic(msg,user_id="default"):
             return "⚠️ Please enter a valid number."
 
     if user_state.get(user_id, {}).get("step") == "ask_status":
+        print("DEBUG2:", user_id, user_state.get(user_id))
+
         selected_status = None
         target_idx = None
 
@@ -324,30 +328,30 @@ def chat_logic(msg,user_id="default"):
             status_text = "\n".join(
                 [f"{i+1}. {s}" for i, s in enumerate(ORDER_STATUS_LIST)]
             )
-            return f"⚠️ Please select a valid status from the list:\n\n{status_text}"
+            return f"⚠️ Please select a valid status:\n\n{status_text}"
 
         # ✅ proceed with order creation
         count = user_state[user_id]["count"]
-        user_state[user_id] = {"step": None}  # reset state safely
+
+        # ✅ reset ONLY step (do not overwrite dict)
+        user_state[user_id]["step"] = None
 
         logs = []
-
         for i in range(count):
             session_id = i + 1
-
             result = process_single_order(
                 ORDER_JSON_TEMPLATE,
                 target_idx,
                 str(session_id)
             )
 
-            # 🔐 normalize output
             if isinstance(result, list):
                 logs.extend([str(x) for x in result])
             else:
                 logs.append(str(result))
 
-        return "\n".join(logs)   # ✅ STRING ONLY
+        return "\n".join(logs)
+
 
 
     if msg in ["hi", "hello", "hey", "start"]:
